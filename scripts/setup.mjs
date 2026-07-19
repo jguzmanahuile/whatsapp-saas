@@ -64,8 +64,8 @@ const isPlaceholder = (v) => !v || v.trim() === "" || /your-/.test(v);
 function parseEnv(text) {
   const out = {};
   for (const line of text.split("\n")) {
-    const m = /^([A-Z0-9_]+)=(.*)$/.exec(line);
-    if (m) out[m[1]] = m[2].replace(/\r$/, "");
+    const m = /^([A-Z0-9_]+)=(.*?)\r?$/.exec(line);
+    if (m) out[m[1]] = m[2];
   }
   return out;
 }
@@ -81,7 +81,7 @@ function rewriteEnv(finalValues) {
   if (!existsSync(base)) fail(`No encuentro ${base}. ¿Estás en la raíz del repo?`);
   const seen = new Set();
   const lines = readFileSync(base, "utf8").split("\n").map((line) => {
-    const m = /^([A-Z0-9_]+)=(.*)$/.exec(line);
+    const m = /^([A-Z0-9_]+)=(.*?)\r?$/.exec(line);
     if (m && finalValues[m[1]] !== undefined) {
       seen.add(m[1]);
       return `${m[1]}=${finalValues[m[1]]}`;
@@ -102,7 +102,7 @@ function run(cmd, opts = {}) {
 
 function hasCli(name) {
   try {
-    execSync(`command -v ${name}`, { stdio: "ignore" });
+    execSync(process.platform === "win32" ? `where ${name}` : `command -v ${name}`, { stdio: "ignore" });
     return true;
   } catch {
     return false;
